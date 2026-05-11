@@ -67,9 +67,34 @@ DDD hexagonal by bounded context. Each context: `application/`, `domain/`, `infr
 - `POST /notifications/tracking` — Send WhatsApp tracking update
 - `POST /notifications/confirmation` — Send order confirmation
 
+## CQRS Architecture
+
+Based on CodelyTV/java-ddd-example pattern, adapted for Quarkus CDI:
+
+### Domain Layer (`shared/domain/bus/`) — no framework dependencies
+
+- **Command/CommandHandler/CommandBus**: Write-side bus. Command is marker, Handler receives typed command, Bus dispatches.
+- **Query/QueryHandler/QueryBus/Response**: Read-side bus. Query is marker, Handler returns typed Response, Bus dispatches with `ask()`.
+- **DomainEvent/EventBus/DomainEventSubscriber**: Event-driven pub/sub. Abstract DomainEvent with `aggregateId`, `eventId`, `occurredOn`. `@DomainEventSubscriber` annotation for subscriber routing.
+
+### Infrastructure Layer (`shared/infrastructure/bus/`) — Quarkus CDI
+
+- **InMemoryCommandBus**: Dispatches commands via `CDI.current().select(handlerClass).get()`. Uses `CommandHandlersInformation` for handler lookup.
+- **InMemoryQueryBus**: Same pattern for queries, returns `Response`.
+- **CommandHandlersInformation**: Auto-discovers handlers via `Instance<CommandHandler>` injection + reflection on generic type. Builds `Map<Class<Command>, Class<Handler>>`.
+- **QueryHandlersInformation**: Same pattern for query handlers.
+
+### How to Add a Use Case
+
+1. Create `XxxCommand` or `XxxQuery` record/class in `application/` package
+2. Create `XxxCommandHandler implements CommandHandler<XxxCommand>` or `XxxQueryHandler implements QueryHandler<XxxQuery, XxxResponse>`
+3. Annotate handler with `@ApplicationScoped` (Quarkus CDI will discover it automatically)
+4. Inject `CommandBus` or `QueryBus` in the controller, call `dispatch()` or `ask()`
+
 ## Current Status
 
 - ✅ Bootstrap: pom.xml, structure, shared VOs (Currency, CountryCode, Money), Mothers, ElementPicker
+- ✅ CQRS bus: Command/Query/Event interfaces + InMemory implementations with Quarkus CDI
 - ✅ Build: SUCCESS, server starts on localhost:8080
 - ✅ Conventions: Skill `java` with all rules (hexagonal, TDD, AssertJ, Object Mother, naming)
 - 🔲 **Next: First use case — `ProductFinder`** (products/ bounded context)
@@ -89,6 +114,7 @@ DDD hexagonal by bounded context. Each context: `application/`, `domain/`, `infr
 - AssertJ always, Object Mother for test data, ElementPicker for random()
 - NO tests for Value Objects or equals/hashCode
 - Methods ≤20 lines, classes ≤200 lines, constructor injection only
+- CQRS: Commands for writes, Queries for reads, DomainEvents for pub/sub
 
 ## Skill
 
