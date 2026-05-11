@@ -22,16 +22,21 @@ public final class CommandHandlersInformation {
     }
 
     @Inject
-    void indexHandlers(Instance<CommandHandler> handlers) {
-        for (CommandHandler handler : handlers) {
-            for (var genericInterface : handler.getClass().getGenericInterfaces()) {
-                if (genericInterface instanceof ParameterizedType paramType
-                        && CommandHandler.class.equals(paramType.getRawType())) {
-                    Class<? extends Command> commandClass =
-                            (Class<? extends Command>) paramType.getActualTypeArguments()[0];
-                    indexedCommandHandlers.put(
-                            commandClass, (Class<? extends CommandHandler>) handler.getClass());
+    void indexHandlers(Instance<CommandHandler<?>> handlers) {
+        for (CommandHandler<?> handler : handlers) {
+            Class<?> handlerClass = handler.getClass();
+            while (handlerClass != null && handlerClass != Object.class) {
+                for (var genericInterface : handlerClass.getGenericInterfaces()) {
+                    if (genericInterface instanceof ParameterizedType paramType
+                            && CommandHandler.class.equals(paramType.getRawType())) {
+                        Class<? extends Command> commandClass =
+                                (Class<? extends Command>) paramType.getActualTypeArguments()[0];
+                        indexedCommandHandlers.put(
+                                commandClass, (Class<? extends CommandHandler>) handlerClass);
+                        break;
+                    }
                 }
+                handlerClass = handlerClass.getSuperclass();
             }
         }
     }

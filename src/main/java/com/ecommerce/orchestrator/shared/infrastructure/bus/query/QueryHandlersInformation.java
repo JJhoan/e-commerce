@@ -21,16 +21,21 @@ public final class QueryHandlersInformation {
     }
 
     @Inject
-    void indexHandlers(Instance<QueryHandler> handlers) {
-        for (QueryHandler handler : handlers) {
-            for (var genericInterface : handler.getClass().getGenericInterfaces()) {
-                if (genericInterface instanceof ParameterizedType paramType
-                        && QueryHandler.class.equals(paramType.getRawType())) {
-                    Class<? extends Query> queryClass =
-                            (Class<? extends Query>) paramType.getActualTypeArguments()[0];
-                    indexedQueryHandlers.put(
-                            queryClass, (Class<? extends QueryHandler>) handler.getClass());
+    void indexHandlers(Instance<QueryHandler<?, ?>> handlers) {
+        for (QueryHandler<?, ?> handler : handlers) {
+            Class<?> handlerClass = handler.getClass();
+            while (handlerClass != null && handlerClass != Object.class) {
+                for (var genericInterface : handlerClass.getGenericInterfaces()) {
+                    if (genericInterface instanceof ParameterizedType paramType
+                            && QueryHandler.class.equals(paramType.getRawType())) {
+                        Class<? extends Query> queryClass =
+                                (Class<? extends Query>) paramType.getActualTypeArguments()[0];
+                        indexedQueryHandlers.put(
+                                queryClass, (Class<? extends QueryHandler>) handlerClass);
+                        break;
+                    }
                 }
+                handlerClass = handlerClass.getSuperclass();
             }
         }
     }
