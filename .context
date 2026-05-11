@@ -1,0 +1,95 @@
+# Orchestrator — Dropshipping Automation for LATAM
+
+## Objective
+
+Automate the entire dropshipping lifecycle for Latin America: find trending products, create/manage stores, handle payments, fulfill orders with fast suppliers (<7 days), run ad campaigns, and track analytics. Built to run with minimal human intervention.
+
+## How It Works
+
+1. **Research** finds trending products in LATAM (Google Trends + MercadoLibre API)
+2. **Pricing** calculates local prices considering exchange rates, taxes, margins
+3. **Stores** creates/updates products in WooCommerce stores automatically
+4. **Ads** launches Meta/Google ad campaigns with auto-generated creatives
+5. **Orders** processes incoming orders: verify payment → create supplier order → notify customer
+6. **Suppliers** routes orders to the best available supplier (CJ, Dropi, Printful) with fast delivery
+7. **Payments** handles MercadoPago webhooks, confirmations, and refunds
+8. **Notifications** sends WhatsApp updates for tracking and order status
+
+## Target Markets
+
+Mexico, Colombia, Argentina, Brazil, Chile, Peru — prioritized by prepaid payment adoption.
+
+## Fast Suppliers (<7 days)
+
+Dropi (COL/MX), CJ Dropshipping MX depot, Printful/Gelato (POD), Mercado Libre Full.
+
+## Architecture
+
+DDD hexagonal by bounded context. Each context: `application/`, `domain/`, `infrastructure/`. Controllers as QueryHandler inside the context. No separate `apps/` module.
+
+## Endpoints (Planned)
+
+### products/
+- `GET /products/{id}` — Find product by ID
+- `GET /products` — Search products (country, category, price range)
+- `POST /products` — Create product with auto-pricing
+- `PUT /products/{id}/price` — Update price (exchange rate/margin shift)
+- `POST /products/{id}/pause` — Pause product
+- `POST /products/{id}/resume` — Resume product
+
+### orders/
+- `POST /orders/{id}/process` — Process order: verify payment → fulfill → notify
+- `GET /orders/{id}/status` — Track order status
+- `POST /orders/{id}/refund` — Process refund
+
+### payments/
+- `POST /payments/preference` — Create MercadoPago payment preference
+- `POST /webhooks/mercadopago` — Handle payment confirmation webhook
+- `POST /payments/{id}/refund` — Process refund via MercadoPago
+
+### pricing/
+- `POST /pricing/calculate` — Calculate local price for product/country
+- `POST /pricing/rules` — Create pricing rule
+- `PUT /pricing/rules/{id}` — Update pricing rule
+
+### ads/
+- `POST /ads/campaigns` — Create Meta Ads campaign
+- `POST /ads/campaigns/{id}/pause` — Pause campaign
+- `POST /ads/optimize` — Optimize budget allocation
+- `GET /ads/campaigns/{id}/metrics` — Fetch campaign metrics
+
+### research/
+- `GET /research/trends` — Find trending products
+- `GET /research/score` — Score product viability
+- `GET /research/markets` — Analyze market conditions per country
+
+### notifications/
+- `POST /notifications/tracking` — Send WhatsApp tracking update
+- `POST /notifications/confirmation` — Send order confirmation
+
+## Current Status
+
+- ✅ Bootstrap: pom.xml, structure, shared VOs (Currency, CountryCode, Money), Mothers, ElementPicker
+- ✅ Build: SUCCESS, server starts on localhost:8080
+- ✅ Conventions: Skill `java` with all rules (hexagonal, TDD, AssertJ, Object Mother, naming)
+- 🔲 **Next: First use case — `ProductFinder`** (products/ bounded context)
+
+## What to Do Next
+
+1. Create `products/` bounded context: `application/`, `domain/`, `infrastructure/`
+2. Implement `ProductFinder` use case (TDD): test → domain entity + repository → application class → infrastructure
+3. Add `GET /products/{id}` endpoint
+4. Continue with next use case: `ProductCreator`
+
+## Conventions (Summary)
+
+- NO technical suffixes (`ProductNotFound`, not `ProductNotFoundException`)
+- Value Objects ALWAYS, with `Supported` enum for validation
+- NO static constants in VOs — use factory methods
+- AssertJ always, Object Mother for test data, ElementPicker for random()
+- NO tests for Value Objects or equals/hashCode
+- Methods ≤20 lines, classes ≤200 lines, constructor injection only
+
+## Skill
+
+All coding rules: `~/.config/opencode/skills/java/SKILL.md`
