@@ -24,9 +24,11 @@ Thumbs.db
 # Logs
 *.log
 
-# Env
+# Env — NEVER commit real keys
 .env
 .env.local
+.env.*.local
+*.env.local
 
 # AI tools
 .atl/

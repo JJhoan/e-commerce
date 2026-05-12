@@ -6,7 +6,7 @@ Automate the entire dropshipping lifecycle for Latin America: find trending prod
 
 ## How It Works
 
-1. **Research** finds trending products in LATAM (Google Trends + MercadoLibre API)
+1. **Research** finds trending products in LATAM (SerpApi Google Shopping → future: MercadoLibre API)
 2. **Pricing** calculates local prices considering exchange rates, taxes, margins
 3. **Stores** creates/updates products in WooCommerce stores automatically
 4. **Ads** launches Meta/Google ad campaigns with auto-generated creatives
@@ -59,7 +59,8 @@ DDD hexagonal by bounded context. Each context: `application/`, `domain/`, `infr
 - `GET /ads/campaigns/{id}/metrics` — Fetch campaign metrics
 
 ### research/
-- `GET /research/trends` — Find trending products
+- `GET /research/trends?country={country}&query={query}` — Find trending products via SerpApi Google Shopping
+- `GET /research/trends?country={country}&category={category}` — Find trending products by category
 - `GET /research/score` — Score product viability
 - `GET /research/markets` — Analyze market conditions per country
 
@@ -97,14 +98,24 @@ Based on CodelyTV/java-ddd-example pattern, adapted for Quarkus CDI:
 - ✅ CQRS bus: Command/Query/Event interfaces + InMemory implementations with Quarkus CDI
 - ✅ Build: SUCCESS, server starts on localhost:8080
 - ✅ Conventions: Skill `java` with all rules (hexagonal, TDD, AssertJ, Object Mother, naming)
-- 🔲 **Next: First use case — `ProductFinder`** (products/ bounded context)
+- 🔲 **Next: First use case — `TrendFinder`** (research/ bounded context)
 
 ## What to Do Next
 
-1. Create `products/` bounded context: `application/`, `domain/`, `infrastructure/`
-2. Implement `ProductFinder` use case (TDD): test → domain entity + repository → application class → infrastructure
-3. Add `GET /products/{id}` endpoint
-4. Continue with next use case: `ProductCreator`
+1. Create `research/` bounded context: `application/`, `domain/`, `infrastructure/`
+2. Implement `TrendFinder` use case (TDD): test → domain VOs + repository → application class → infrastructure (SerpApi client)
+3. Add `GET /research/trends?country={country}&query={query}` endpoint
+4. Continue with next use case: `ProductScorer`
+
+## SerpApi Integration (Phase 1 — Product Research)
+
+- Engine: `google_shopping` (real product data from Google Shopping LATAM)
+- Auth: API key via `${SERPAPI_KEY}` env variable → `serpapi.key` in properties
+- Base URL: `https://serpapi.com/search.json`
+- Key params: `engine=google_shopping`, `q={query}`, `gl={country}`, `hl=es`, `google_domain=google.com.{mx|ar}`
+- Response: title, price, extracted_price, rating, reviews, source, thumbnail, product_id
+- Free tier: 250 searches/month
+- Security: API key stored in `.env.local` (gitignored), referenced as `${SERPAPI_KEY}` in application.properties
 
 ## Conventions (Summary)
 
